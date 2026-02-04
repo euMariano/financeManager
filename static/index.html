@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Organizador Financeiro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1 class="header__title">Organizador Financeiro</h1>
+    <div class="header__controls">
+      <a class="header__link" href="/docs" target="_blank" rel="noopener">API Docs</a>
+      <div id="header-auth" class="header__auth hidden" aria-live="polite">
+        <span id="header-username" class="header__user"></span>
+        <button type="button" id="btn-logout" class="btn btn--secondary btn--small">Sair</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="auth-overlay" class="auth-overlay hidden" role="dialog" aria-modal="true">
+    <div class="auth-card">
+      <h2 class="auth-card__title">Bem-vindo(a)</h2>
+      <p class="auth-card__subtitle">Faça login ou crie uma conta para acessar suas finanças.</p>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" id="auth-tab-login" class="auth-tab auth-tab--active" role="tab" aria-controls="login-form">Entrar</button>
+        <button type="button" id="auth-tab-register" class="auth-tab" role="tab" aria-controls="register-form">Cadastrar</button>
+      </div>
+
+      <form id="login-form" class="auth-form" autocomplete="on">
+        <label class="field">
+          <span class="field__label">Nome de usuário</span>
+          <input type="text" id="login-username" class="field__input" minlength="3" maxlength="50" required />
+        </label>
+        <label class="field">
+          <span class="field__label">Senha</span>
+          <input type="password" id="login-password" class="field__input" minlength="6" maxlength="128" required />
+        </label>
+        <button type="submit" class="btn btn--primary auth-form__submit">Entrar</button>
+      </form>
+
+      <form id="register-form" class="auth-form hidden" autocomplete="off">
+        <label class="field">
+          <span class="field__label">Nome de usuário</span>
+          <input type="text" id="register-username" class="field__input" minlength="3" maxlength="50" required />
+        </label>
+        <label class="field">
+          <span class="field__label">Senha</span>
+          <input type="password" id="register-password" class="field__input" minlength="6" maxlength="128" required />
+        </label>
+        <button type="submit" class="btn btn--primary auth-form__submit">Criar conta</button>
+      </form>
+
+      <p id="auth-error" class="error hidden" aria-live="assertive"></p>
+    </div>
+  </div>
+
+  <main class="main">
+    <section class="balance card">
+      <h2 class="card__title">Saldo líquido</h2>
+      <div class="balance__row">
+        <input type="number" id="balance-input" class="balance__input" step="0.01" min="0" placeholder="0,00" />
+        <button type="button" id="balance-save" class="btn btn--primary">Atualizar</button>
+      </div>
+      <p id="balance-error" class="error hidden"></p>
+    </section>
+
+    <section class="summary card">
+      <h2 class="card__title">Situação</h2>
+      <div id="zone-badge" class="zone zone--verde" aria-live="polite">Carregando…</div>
+      <dl class="summary__grid">
+        <dt>Total de despesas</dt>
+        <dd id="summary-expenses">—</dd>
+        <dt>Percentual do saldo</dt>
+        <dd id="summary-percent">—</dd>
+        <dt>Quantidade de itens</dt>
+        <dd id="summary-count">—</dd>
+      </dl>
+    </section>
+
+    <section class="actions">
+      <button type="button" id="btn-add-card" class="btn btn--primary">Nova despesa</button>
+      <a id="btn-export" href="../api/export/spreadsheet" class="btn btn--secondary" download="financas.xlsx">Baixar planilha</a>
+    </section>
+
+    <section class="filters card">
+      <h2 class="card__title">Filtros</h2>
+      <div class="filters__row">
+        <label>
+          <span class="filters__label">Status</span>
+          <select id="filter-status" class="filters__select">
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="pago">Pago</option>
+          </select>
+        </label>
+        <label>
+          <span class="filters__label">Tipo</span>
+          <select id="filter-type" class="filters__select">
+            <option value="">Todos</option>
+            <option value="casa">Casa</option>
+            <option value="faculdade">Faculdade</option>
+            <option value="saude">Saúde</option>
+            <option value="lazer">Lazer</option>
+            <option value="alimentacao">Alimentação</option>
+            <option value="transporte">Transporte</option>
+            <option value="outros">Outros</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="cards-section">
+      <h2 class="card__title">Despesas</h2>
+      <div id="cards-list" class="cards-list" aria-live="polite">
+        <p class="muted">Carregando…</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="modal-card" class="modal" aria-labelledby="modal-title" aria-modal="true">
+    <form id="form-card" class="modal__content">
+      <h2 id="modal-title" class="modal__title">Nova despesa</h2>
+      <input type="hidden" id="card-id" />
+      <label class="field">
+        <span class="field__label">Título da despesa</span>
+        <input type="text" id="card-title" class="field__input" placeholder="Ex.: Aluguel, Mensalidade Unesp" maxlength="200" />
+      </label>
+      <label class="field">
+        <span class="field__label">Urgência (1 = maior)</span>
+        <input type="number" id="card-urgency" class="field__input" min="1" required />
+      </label>
+      <label class="field">
+        <span class="field__label">Tipo</span>
+        <select id="card-type" class="field__input" required>
+          <option value="casa">Casa</option>
+          <option value="faculdade">Faculdade</option>
+          <option value="saude">Saúde</option>
+          <option value="lazer">Lazer</option>
+          <option value="alimentacao">Alimentação</option>
+          <option value="transporte">Transporte</option>
+          <option value="outros">Outros</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">Valor (R$)</span>
+        <input type="number" id="card-value" class="field__input" step="0.01" min="0.01" required />
+      </label>
+      <label class="field">
+        <span class="field__label">Data para pagar</span>
+        <input type="date" id="card-due" class="field__input" required />
+      </label>
+      <label class="field">
+        <span class="field__label">Status</span>
+        <select id="card-status" class="field__input">
+          <option value="pendente">Pendente</option>
+          <option value="pago">Pago</option>
+        </select>
+      </label>
+      <p id="form-error" class="error hidden"></p>
+      <div class="modal__actions">
+        <button type="button" id="modal-cancel" class="btn btn--secondary">Cancelar</button>
+        <button type="submit" class="btn btn--primary">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
