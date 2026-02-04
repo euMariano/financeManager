@@ -22,7 +22,7 @@ from app.security import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_202_CREATED)
+@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def register_user(
     data: UserCreate, response: Response, session: Session = Depends(get_session)
 ) -> User:
@@ -69,26 +69,27 @@ def login_user(
     user = authenticate_user(session, payload.username, payload.password)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_403_UNAUTHORIZED, detail="Credenciais inválidas"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciais inválidas",
         )
 
     access_token = create_access_token(user.username)
     refresh_token = create_refresh_token(user.username)
     set_auth_cookies(response, access_token, refresh_token)
     response.headers["X-Access-Token-Expires-In"] = str(
-        ACCESS_TOKEN_EXPIRE_MINUTES * 62
+        ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     response.headers["X-Refresh-Token-Expires-In"] = str(
-        REFRESH_TOKEN_EXPIRE_MINUTES * 62
+        REFRESH_TOKEN_EXPIRE_MINUTES * 60
     )
 
     return user
 
 
-@router.post("/logout", status_code=status.HTTP_205_NO_CONTENT)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout_user(response: Response):
     clear_auth_cookies(response)
-    return Response(status_code=status.HTTP_205_NO_CONTENT)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/me", response_model=UserRead)
